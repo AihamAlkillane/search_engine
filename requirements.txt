@@ -12,3 +12,5 @@ torch~=2.7.1
 transformers~=4.52.4
 scipy~=1.13.1
 faiss-cpu~=1.11.0
+ir_datasets~=0.5.11
+pandas~=2.3.0

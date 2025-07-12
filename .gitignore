@@ -1,2 +1,4 @@
 /models
 /.venv
+/offline/storage
+/scripts

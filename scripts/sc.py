@@ -1,16 +1,24 @@
 import ir_datasets
-import os
-import json
 
-dataset_name = "antique/test"  # جرب dataset مختلفة
+dataset_name = "lotte/writing/dev/search"
 
+# تحميل الداتاست
 dataset = ir_datasets.load(dataset_name)
 
-os.makedirs(f"data/{dataset_name.replace('/', '_')}", exist_ok=True)
+# طباعة بعض الأمثلة على الوثائق
+for i, doc in enumerate(dataset.docs_iter()):
+    print(doc)
+    if i >= 2:  # نطبع أول 3 وثائق فقط كمثال
+        break
 
-with open(f"data/{dataset_name.replace('/', '_')}/docs.jsonl", "w", encoding="utf-8") as f:
-    for i, doc in enumerate(dataset.docs_iter()):
-        json_line = json.dumps(doc._asdict(), ensure_ascii=False)
-        f.write(json_line + "\n")
-        if i >= 1000:  # جرب تكتب أول 1000 وثيقة فقط عشان تختبر
-            break
+# طباعة بعض الأمثلة على الاستعلامات (queries)
+for i, query in enumerate(dataset.queries_iter()):
+    print(query)
+    if i >= 2:
+        break
+
+# طباعة بعض الأمثلة على الـ qrels (التقييمات)
+for i, qrel in enumerate(dataset.qrels_iter()):
+    print(qrel)
+    if i >= 2:
+        break

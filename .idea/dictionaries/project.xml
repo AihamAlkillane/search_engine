@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>arguana</w>
+      <w>qrels</w>
     </words>
   </dictionary>
 </component>
