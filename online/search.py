@@ -5,6 +5,15 @@ from db import db_service
 
 
 class SearchHandler(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+    def options(self):
+        self.set_status(204)
+        self.finish()
+
     def initialize(self, tfidf_pipeline, bert_sentence_pipline, dataset_name):
         self.tfidf_pipeline = tfidf_pipeline
         self.bert_sentence_pipline = bert_sentence_pipline
@@ -27,7 +36,8 @@ class SearchHandler(tornado.web.RequestHandler):
         elif model_type == "bert-sentence":
             if index_type == "flat_ip_index":
                 top_ids, top_scores = self.bert_sentence_pipline.run_with_flat_ip_index(query)
-
+                print("Scores:", top_scores)
+                print("Indices:", top_ids)
         elif model_type == "hybrid-serial":
             candidates_ids, top_scores = self.tfidf_pipeline.run_with_inverted_index(query, 1000)
             top_ids, top_scores = self.bert_sentence_pipline.run_with_filtered_candidates(query, candidates_ids, 10)
@@ -49,5 +59,7 @@ class SearchHandler(tornado.web.RequestHandler):
                 "text": row.get("text", "")
             }
             results.append(result)
+
+        results = sorted(results, key=lambda x: x["score"], reverse=True)
 
         self.write({"results": results})

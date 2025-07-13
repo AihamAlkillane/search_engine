@@ -18,7 +18,7 @@ class TfidfHandler(tornado.web.RequestHandler):
             df_min = data["df_min"]
             df_max = data["df_max"]
 
-            folder_path = os.path.join(MODEL_PATH, dataset_name)
+            folder_path = os.path.join(MODEL_PATH, dataset_name, "tf-idf")
             os.makedirs(folder_path, exist_ok=True)
 
             vectorizer = TfidfVectorizer(
@@ -34,8 +34,8 @@ class TfidfHandler(tornado.web.RequestHandler):
             preprocessed_data = db.db_service.fetch_preprocessed_data(dataset_name + "_corpus")
             tf_idf_vectors = vectorizer.fit_transform(preprocessed_data)
 
-            joblib.dump(vectorizer, folder_path + "/vectorizer.joblib", compress=0)
-            joblib.dump(tf_idf_vectors, folder_path + "/vectors.joblib", compress=0)
+            joblib.dump(vectorizer, f"{MODEL_PATH}{dataset_name}/tf-idf/vectorizer.joblib", compress=0)
+            joblib.dump(tf_idf_vectors, f"{MODEL_PATH}{dataset_name}/tf-idf/vectors.joblib", compress=0)
 
             self.set_header("Content-Type", "application/json")
             self.write({

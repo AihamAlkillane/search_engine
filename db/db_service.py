@@ -16,7 +16,7 @@ def create_table(table_name, columns):
         columns_sql_parts = []
         for col in columns:
             if col.lower() == "_id":
-                columns_sql_parts.append(f"{col} TEXT PRIMARY KEY")
+                columns_sql_parts.append(f"{col} INT PRIMARY KEY")
             else:
                 columns_sql_parts.append(f"{col} TEXT")
 
@@ -36,6 +36,38 @@ def create_table(table_name, columns):
         conn.close()
     except Exception as e:
         print(f"Error creating table: {e}")
+
+
+def insert_from_tsv(table_name, columns, file_path):
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        cur = conn.cursor()
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                values = line.strip().split('\t')
+
+                if len(values) != len(columns):
+                    print(f"Skipping line due to column mismatch: {line}")
+                    continue
+
+                placeholders = sql.SQL(', ').join(sql.Placeholder() * len(values))
+
+                insert_query = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
+                    sql.Identifier(table_name),
+                    sql.SQL(', ').join(map(sql.Identifier, columns)),
+                    placeholders
+                )
+                cur.execute(insert_query, values)
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print(f"Inserted data from {file_path} into {table_name}")
+
+    except Exception as e:
+        print(f"Error inserting data: {e}")
 
 
 def insert_from_jsonl(table_name, columns, file_path):
@@ -77,13 +109,26 @@ def fetch_all_rows(table_name):
 
 
 def fetch_preprocessed_data(table_name):
+    conn = None
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         with conn.cursor() as cur:
             query = f"SELECT preprocessed_data FROM {table_name} ORDER BY _id ASC"
             cur.execute(query)
             rows = cur.fetchall()
-            return [row[0] for row in rows]
+            return [row[0] if row[0] is not None else "" for row in rows]
+    finally:
+        conn.close()
+
+
+def fetch_all_text(table_name):
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        with conn.cursor() as cur:
+            query = f"SELECT text FROM {table_name} ORDER BY _id ASC"
+            cur.execute(query)
+            rows = cur.fetchall()
+            return [row[0] if row[0] is not None else "" for row in rows]
     finally:
         conn.close()
 
@@ -103,25 +148,6 @@ def update_preprocessed_data(table_name, row_id, preprocessed_text):
         conn.close()
 
 
-def get_filtered_columns(table_name):
-    try:
-        conn = psycopg2.connect(**DB_CONFIG)
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = %s
-                ORDER BY ordinal_position
-            """, (table_name,))
-            all_columns = [row[0] for row in cur.fetchall()]
-
-            excluded = {"_id", "preprocessed_data"}
-            filtered_columns = [col for col in all_columns if col not in excluded]
-            return filtered_columns
-    finally:
-        conn.close()
-
-
 def fetch_documents_by_ids(table_name, ids):
     placeholders = ', '.join(['%s'] * len(ids))  # For safe query
     query = f"SELECT * FROM {table_name} WHERE _id IN ({placeholders}) "
@@ -130,6 +156,29 @@ def fetch_documents_by_ids(table_name, ids):
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(query, ids)
             return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def bulk_update_preprocessed_data(table_name, updates):
+    """
+    تحديث عدة صفوف دفعة واحدة.
+
+    :param table_name: اسم الجدول
+    :param updates: قائمة tuples بالشكل (row_id, preprocessed_text)
+    """
+
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        with conn:
+            with conn.cursor() as cur:
+                for row_id, preprocessed_text in updates:
+                    query = f"""
+                        UPDATE {table_name}
+                        SET preprocessed_data = %s
+                        WHERE _id = %s
+                    """
+                    cur.execute(query, (preprocessed_text, row_id))
     finally:
         conn.close()
 

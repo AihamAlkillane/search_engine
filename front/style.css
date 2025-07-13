@@ -12,7 +12,7 @@ body {
 
 .container {
   width: 100%;
-  max-width: 800px;
+  height: 100vh;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -32,6 +32,7 @@ h1 {
 }
 
 #model-select,
+#model-type-index,
 #search-input {
   width: 100%;
   padding: 10px;
@@ -40,20 +41,21 @@ h1 {
   font-size: 16px;
 }
 
-#model-select {
-  flex-basis: 30%;
+#model-select,
+#model-type-index {
+  flex-basis: 10%;
 }
 
 #search-input {
-  flex-basis: 70%;
+  flex-basis: 80%;
 }
 
 .results-container {
   border: 1px solid #dddfe2;
   border-radius: 6px;
   padding: 10px;
-  min-height: 200px;
-  max-height: 400px;
+  min-height: 70vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -81,4 +83,4 @@ h1 {
 .loader {
   text-align: center;
   padding: 20px;
-} 
+}
